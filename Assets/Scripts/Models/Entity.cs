@@ -54,4 +54,6 @@ public class Entity
 
     [Header("Component")]
     public AudioSource entityAudio;
+    public GameObject petPrefab;
+    public GameObject pet;
 }
