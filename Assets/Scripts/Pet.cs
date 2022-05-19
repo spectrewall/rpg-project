@@ -29,14 +29,14 @@ public class Pet : MonoBehaviour
 
     float heightDifferenceBottom;
 
-    private void Awake()
+    private void Start()
     {
         // Get pet's components
         petAnimator = GetComponent<Animator>();
         rb2D = GetComponent<Rigidbody2D>();
 
         // Get pet's owner
-        owner = GameObject.FindGameObjectWithTag("Player");
+        owner = transform.parent.gameObject;
 
         // Calculete height difference between pet and owner
         float petHeight = GetComponent<SpriteRenderer>().bounds.size.y;
@@ -55,11 +55,6 @@ public class Pet : MonoBehaviour
         // Defines start position
         ownerBack = getNewOwnerBack(0, -1, owner.transform.position);
         ownerLastPosition = owner.transform.position;
-    }
-
-    private void Start()
-    {
-        
     }
 
     private void Update()
