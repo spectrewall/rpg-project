@@ -18,11 +18,6 @@ public class Monster : MonoBehaviour
     public float waitTime = 5;
     public int waypointID;
 
-    private Transform targetWaypoint;
-    private int currentWaypoint = 0;
-    private float lastDistanceToTarget = 0f;
-    private float currentWaitTime = 0f;
-
     [Header("Rewards")]
     public int rewardExperience = 10;
     public int lootGoldMin = 0;
@@ -33,29 +28,44 @@ public class Monster : MonoBehaviour
     public bool respawn = true;
     public float respawnTime = 10f;
 
-    private Rigidbody2D rb2D;
-    private Animator animator;
-
     [Header("UI")]
     public Slider healthSlider;
 
+    // Private
+    Transform targetWaypoint;
+    int currentWaypoint = 0;
+    float lastDistanceToTarget = 0f;
+    float currentWaitTime = 0f;
+    Vector2 direction;
+    Rigidbody2D rb2D;
+    Animator animator;
+    Vector2 initialPosition;
+    Coroutine combatCoroutine;
+
     private void Start()
     {
+        initialPosition = transform.position;
+
+        // Get Components
         rb2D = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         manager = GameObject.Find("GameManager").GetComponent<GameManager>();
 
+        // Entity Setup
+        entity.dead = false;
+        entity.combatCoroutine = false;
         entity.maxHealth = manager.CalculateHealth(entity);
         entity.maxMana = manager.CalculateMana(entity);
         entity.maxStamina = manager.CalculateMana(entity);
-
         entity.currentHealth = entity.maxHealth;
         entity.currentMana = entity.maxMana;
         entity.currentStamina = entity.maxStamina;
 
+        // Slider Setup
         healthSlider.maxValue = entity.maxHealth;
         healthSlider.value = healthSlider.maxValue;
 
+        // Waypoints Setup
         foreach(GameObject obj in GameObject.FindGameObjectsWithTag("Waypoint"))
         {
             int ID = obj.GetComponent<WaypointID>().ID;
@@ -75,8 +85,7 @@ public class Monster : MonoBehaviour
 
     private void Update()
     {
-        if (entity.dead)
-            return;
+        if (entity.dead) return;
 
         if (entity.currentHealth <= 0)
         {
@@ -86,59 +95,50 @@ public class Monster : MonoBehaviour
 
         healthSlider.value = entity.currentHealth;
 
-        if (!entity.inCombat)
+        if (entity.target == null)
         {
-            if (waypointList.Count > 0)
-                Patrol();
-            else
-                animator.SetBool("isWalking", false);
-        } else
-        {
-            if (entity.attackTimer > 0)
-                entity.attackTimer -= Time.deltaTime;
-
-            if (entity.attackTimer < 0)
-                entity.attackTimer = 0;
-
-            if (entity.target != null && entity.inCombat)
-            {
-                if (!entity.combatCoroutine)
-                    StartCoroutine(Attack());
-            } else
-            {
-                entity.combatCoroutine = false;
-                StopCoroutine(Attack());
-            }
+            if (waypointList.Count > 0) Patrol();
+            else animator.SetBool("isWalking", false);
         }
+        else
+        {
+            FollowTarget();
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (entity.dead) return;
+        rb2D.MovePosition(rb2D.position + direction * (entity.speed * Time.fixedDeltaTime));
     }
 
     private void OnTriggerStay2D(Collider2D collider)
     {
-        if (collider.tag == "Player" && !entity.dead)
+        if (!entity.dead && entity.target == null)
         {
-            entity.inCombat = true;
-            entity.target = collider.gameObject;
-            entity.target.GetComponent<BoxCollider2D>().isTrigger = true;
+            if (collider.tag == "Player" && !collider.gameObject.GetComponent<Player>().entity.dead)
+            {
+                entity.target = collider.gameObject;
+            }
         }
     }
 
     private void OnTriggerExit2D(Collider2D collider)
     {
-        if (collider.tag == "Player")
+        if (entity.target.Equals(collider.gameObject))
         {
-            entity.inCombat = false;
-            if (entity.target)
-            {
-                entity.target.GetComponent<BoxCollider2D>().isTrigger = false;
-                entity.target = null;
-            }
+            entity.target = null;
         }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collider)
+    {
+        
     }
 
     void Patrol()
     {
-        if (entity.dead)
-            return;
+        if (entity.dead) return;
 
         float distanceToTarget = Vector2.Distance(transform.position, targetWaypoint.position);
 
@@ -148,46 +148,68 @@ public class Monster : MonoBehaviour
             {
                 currentWaypoint++;
 
-                if (currentWaypoint >= waypointList.Count)
-                    currentWaypoint = 0;
+                if (currentWaypoint >= waypointList.Count) currentWaypoint = 0;
 
                 targetWaypoint = waypointList[currentWaypoint];
                 lastDistanceToTarget = Vector2.Distance(transform.position, targetWaypoint.position);
 
                 currentWaitTime = waitTime;
-            } else
+            } 
+            else
             {
                 animator.SetBool("isWalking", false);
                 currentWaitTime -= Time.deltaTime;
             }
-        } else
+        } 
+        else
         {
             animator.SetBool("isWalking", true);
             lastDistanceToTarget = distanceToTarget;
         }
 
-        Vector2 direction = (targetWaypoint.position - transform.position).normalized;
+        direction = (targetWaypoint.position - transform.position).normalized;
         animator.SetFloat("input_x", direction.x);
         animator.SetFloat("input_y", direction.y);
+    }
 
-        rb2D.MovePosition(rb2D.position + direction * (entity.speed * Time.fixedDeltaTime));
+    void FollowTarget()
+    {
+        if (entity.dead) return;
+        if (entity.target.GetComponent<Player>().entity.dead)
+        {
+            entity.target = null;
+            return;
+        }
+
+        float distanceToTarget = Vector2.Distance(transform.position, entity.target.transform.position);
+
+        if (distanceToTarget <= entity.attackDistance)
+        {
+            animator.SetBool("isWalking", false);
+            direction = Vector2.zero;
+            if (!entity.combatCoroutine) combatCoroutine = StartCoroutine(Attack());
+        }
+        else
+        {
+            direction = (entity.target.transform.position - transform.position).normalized;
+            animator.SetBool("isWalking", true);
+            animator.SetFloat("input_x", direction.x);
+            animator.SetFloat("input_y", direction.y);
+        }
     }
 
     IEnumerator Attack()
     {
         entity.combatCoroutine = true;
-
         while (true)
         {
-            yield return new WaitForSeconds(entity.cooldown);
-
             if(entity.target != null && !entity.target.GetComponent<Player>().entity.dead)
             {
-                animator.SetBool("attack", true);
-                float distance = Vector2.Distance(entity.target.transform.position, transform.position);
+                float distance = Vector2.Distance(transform.position, entity.target.transform.position);
 
                 if (distance <= entity.attackDistance)
                 {
+                    animator.SetBool("attack", true);
                     int monsterDmg = manager.CalculateDamage(entity, entity.damage);
                     int targetDef = manager.CalculateDefense(entity.target.GetComponent<Player>().entity, entity.target.GetComponent<Player>().entity.defense);
                     int dmgResult = monsterDmg - targetDef;
@@ -195,10 +217,19 @@ public class Monster : MonoBehaviour
                     if (dmgResult < 0)
                         dmgResult = 0;
 
-                    Debug.Log("Inimigo atacou o player, Dmg: " + dmgResult.ToString());
                     entity.target.GetComponent<Player>().entity.currentHealth -= dmgResult;
+                    Debug.Log("Damage given: " + dmgResult);
+                    yield return new WaitForSeconds(entity.cooldown);
                 }
             }
+            else
+            {
+                entity.currentHealth = entity.maxHealth;
+                entity.combatCoroutine = false;
+                StopCoroutine(combatCoroutine);
+            }
+
+            yield return null;
         }
     }
 
@@ -209,11 +240,8 @@ public class Monster : MonoBehaviour
         entity.target = null;
 
         animator.SetBool("isWalking", false);
-
         Player player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
         player.GainExp(rewardExperience);
-
-        Debug.Log("O inimigo morreu: " + entity.name);
 
         StopAllCoroutines();
         StartCoroutine(Respawn());
@@ -222,12 +250,8 @@ public class Monster : MonoBehaviour
     IEnumerator Respawn()
     {
         yield return new WaitForSeconds(respawnTime);
-
-        GameObject newMonster = Instantiate(prefab, transform.position, transform.rotation, null);
-        newMonster.name = prefab.name;
-        newMonster.GetComponent<Monster>().entity.dead = false;
-        newMonster.GetComponent<Monster>().entity.combatCoroutine = false;
-
-        Destroy(this.gameObject);
+        GameObject newMonster = Instantiate(gameObject, initialPosition, transform.rotation, null);
+        newMonster.name = gameObject.name;
+        Destroy(gameObject);
     }
 }
