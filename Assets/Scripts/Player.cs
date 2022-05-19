@@ -83,9 +83,7 @@ public class Player : MonoBehaviour
 
     [Header("Respawn")]
     public float respawnTime = 5;
-    public GameObject prefab;
 
-    // Start is called before the first frame update
     void Start()
     {
         if (manager == null)
@@ -94,33 +92,49 @@ public class Player : MonoBehaviour
             return;
         }
 
+
+
+        // Allows player to move
+        GetComponent<PlayerController>().enabled = true;
+
+        // Setup Pet
+        if (entity.petPrefab != null)
+        {
+            if (entity.petPrefab.TryGetComponent<Pet>(out Pet pet))
+            {
+                entity.pet = Instantiate(entity.petPrefab, transform.position, transform.rotation);
+                entity.pet.transform.SetParent(transform);
+                entity.pet.name = entity.petPrefab.name;
+            }
+        }
+
+        // Setup entity
+        entity.dead = false;
         entity.maxHealth = manager.CalculateHealth(entity);
         entity.maxMana = manager.CalculateMana(entity);
         entity.maxStamina = manager.CalculateStamina(entity);
-
         entity.currentHealth = entity.maxHealth;
         entity.currentMana = entity.maxMana;
         entity.currentStamina = entity.maxStamina;
 
+        // Setup UI Sliders
         health.maxValue = entity.maxHealth;
         health.value = health.maxValue;
-
         mana.maxValue = entity.maxMana;
         mana.value = mana.maxValue;
-
         stamina.maxValue = entity.maxStamina;
         stamina.value = stamina.maxValue;
-
         exp.value = currentExp;
         exp.maxValue = expLeft;
-
         expText.text = String.Format("Exp: {0}/{1}", currentExp, expLeft);
         levelText.text = entity.level.ToString();
 
+        // Start Coroutines
         StartCoroutine(RegenHealth());
         StartCoroutine(RegenMana());
         StartCoroutine(RegenStamina());
 
+        // Setup UI attributes screen
         UpdatePoints();
         SetupUIButtons();
     }
@@ -211,13 +225,15 @@ public class Player : MonoBehaviour
         GetComponent<PlayerController>().enabled = false;
         yield return new WaitForSeconds(respawnTime);
 
-        GameObject newPlayer = Instantiate(prefab, transform.position, transform.rotation, null);
-        newPlayer.name = prefab.name;
-        newPlayer.GetComponent<Player>().entity.dead = false;
-        newPlayer.GetComponent<Player>().entity.combatCoroutine = false;
-        newPlayer.GetComponent<PlayerController>().enabled = true;
+        if (entity.pet != null)
+        {
+            entity.pet.transform.SetParent(null);
+            Destroy(entity.pet);
+        }
 
-        Destroy(this.gameObject);
+        GameObject newPlayer = Instantiate(gameObject, transform.position, transform.rotation);
+        newPlayer.name = gameObject.name;
+        Destroy(gameObject);
     }
 
     public void GainExp(int amount)
