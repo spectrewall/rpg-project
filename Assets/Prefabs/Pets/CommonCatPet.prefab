@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4613720590236850454}
+  - component: {fileID: 4613720590236850455}
   - component: {fileID: 4613720590236850449}
   - component: {fileID: 4613720590236850448}
-  - component: {fileID: 4613720590236850455}
   - component: {fileID: 4613720590236850452}
   - component: {fileID: 4613720590236850453}
   m_Layer: 6
@@ -29,13 +29,28 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4613720590236850451}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.19, y: 0.33, z: 0}
+  m_LocalPosition: {x: -1.9599993, y: 7.239994, z: 0}
   m_LocalScale: {x: 2.5, y: 2.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4613720590236850455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4613720590236850451}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58ebad28827703c44a63831ad481a60e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  petMoveSpeed: 5
+  keepDistance: 1
+  maxDistanceToOwner: 5
 --- !u!212 &4613720590236850449
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -87,7 +102,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
-  m_SpriteSortPoint: 0
+  m_SpriteSortPoint: 1
 --- !u!95 &4613720590236850448
 Animator:
   serializedVersion: 4
@@ -108,23 +123,6 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
---- !u!114 &4613720590236850455
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4613720590236850451}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 58ebad28827703c44a63831ad481a60e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player: {fileID: 0}
-  petAnimator: {fileID: 0}
-  speed: 2.5
-  keepDistance: 1
-  maxDistanceToPlayer: 5
 --- !u!61 &4613720590236850452
 BoxCollider2D:
   m_ObjectHideFlags: 0
