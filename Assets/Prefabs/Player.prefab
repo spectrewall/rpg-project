@@ -84,6 +84,94 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   m_Enabled: 1
+--- !u!1 &1704587647
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1704587648}
+  - component: {fileID: 1704587650}
+  - component: {fileID: 1704587649}
+  - component: {fileID: 1704587651}
+  m_Layer: 0
+  m_Name: MeleeRange
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1704587648
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1704587647}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.497, z: 0.101579964}
+  m_LocalScale: {x: 0, y: 0, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6162717565472237912}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!58 &1704587650
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1704587647}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 1
+--- !u!61 &1704587649
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1704587647}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0.5, y: 0.5}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1}
+  m_EdgeRadius: 0
+--- !u!114 &1704587651
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1704587647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1a28118d992c4f498c0c33c84e17fee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6162717565472237915
 GameObject:
   m_ObjectHideFlags: 0
@@ -121,6 +209,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 519420032}
+  - {fileID: 1704587648}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -209,12 +298,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 0}
-  playerAnimator: {fileID: 6162717565472237914}
   interactKey: 101
+  attributesKey: 99
+  attackKey: 323
   canTeleport: 0
   tmpRegion:
     name: 
     warpLocation: {fileID: 0}
+  attributesPanel: {fileID: 0}
+  attackArea: {fileID: 7588818342855483825, guid: 89d54101e1d1bee40914d408aa05dde0, type: 3}
+  meleeRange: {fileID: 1704587651}
 --- !u!61 &6162717565472237910
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -274,40 +367,53 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0431e2dd3de23b649abc353236d3fdee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  entity:
-    name: SpectreWall
-    level: 1
-    currentHealth: 100
-    maxHealth: 100
-    baseHealth: 26
-    currentMana: 100
-    maxMana: 100
-    currentStamina: 100
-    maxStamina: 100
-    strength: 5
-    dexterity: 5
-    resistence: 5
-    intelligence: 5
-    willPower: 5
-    agility: 5
-    damage: 1
-    defense: 1
-    speed: 2
-    points: 0
-    bonusCritChance: 0
-    bonusSpeed: 0
-    bonusDamage: 0
-    bonusMinDamage: 0
-    bonusMinCritDamage: 0
-    strengthBonus: 1
-    attackDistance: 2
-    attackTimer: 1
-    cooldown: 2
-    inCombat: 0
-    target: {fileID: 0}
-    combatCoroutine: 0
-    dead: 0
-    entityAudio: {fileID: 2162253596634340740}
+  entityName: SpectreWall
+  level: 1
+  type: playable
+  moralAlignment: good
+  currentHealth: 0
+  maxHealth: 0
+  baseHealth: 26
+  currentMana: 0
+  maxMana: 0
+  currentStamina: 0
+  maxStamina: 0
+  strength: 5
+  dexterity: 5
+  resistence: 5
+  intelligence: 5
+  willPower: 5
+  agility: 5
+  damage: 1
+  defense: 1
+  speed: 2
+  points: 0
+  bonusCritChance: 0
+  bonusSpeed: 0
+  bonusDamage: 0
+  bonusMinDamage: 0
+  bonusMinCritDamage: 0
+  strengthBonus: 1
+  attackDistance: 1
+  attackTimer: 1
+  cooldown: 2
+  inCombat: 0
+  target: {fileID: 0}
+  combatCoroutineIsRunning: 0
+  dead: 0
+  rewardExperience: 10
+  lootGoldMin: 0
+  lootGoldMAx: 10
+  prefab: {fileID: 6162717565472237915}
+  respawn: 1
+  respawnTime: 5
+  respawnPosition: {x: 0, y: 0}
+  entityAudio: {fileID: 0}
+  petPrefab: {fileID: 4613720590236850451, guid: fb5c0994ca9ebda4f97c24d9afcda51d, type: 3}
+  pet: {fileID: 0}
+  rb2D: {fileID: 0}
+  animator: {fileID: 0}
+  manager: {fileID: 0}
   regenHPEnabled: 1
   regenHPTime: 5
   regenHPValue: 5
@@ -317,41 +423,12 @@ MonoBehaviour:
   regenSPEnabled: 1
   regenSPTime: 1
   regenSPValue: 1
-  manager: {fileID: 0}
-  attributesKey: 99
-  attributesPanel: {fileID: 0}
   health: {fileID: 0}
   mana: {fileID: 0}
   stamina: {fileID: 0}
   exp: {fileID: 0}
   expText: {fileID: 0}
   levelText: {fileID: 0}
-  strText: {fileID: 0}
-  dexText: {fileID: 0}
-  resText: {fileID: 0}
-  intText: {fileID: 0}
-  wpText: {fileID: 0}
-  agiText: {fileID: 0}
-  points: {fileID: 0}
-  pointsApplyBtn: {fileID: 0}
-  strBtnP: {fileID: 0}
-  dexBtnP: {fileID: 0}
-  resBtnP: {fileID: 0}
-  intBtnP: {fileID: 0}
-  wpBtnP: {fileID: 0}
-  agiBtnP: {fileID: 0}
-  strBtnN: {fileID: 0}
-  dexBtnN: {fileID: 0}
-  resBtnN: {fileID: 0}
-  intBtnN: {fileID: 0}
-  wpBtnN: {fileID: 0}
-  agiBtnN: {fileID: 0}
-  hpValue: {fileID: 0}
-  defValue: {fileID: 0}
-  pshDmgValue: {fileID: 0}
-  critDmgValue: {fileID: 0}
-  critChanceValue: {fileID: 0}
-  speedValue: {fileID: 0}
   currentExp: 0
   expBase: 150
   expLeft: 150
@@ -361,8 +438,6 @@ MonoBehaviour:
   givePoints: 5
   LevelsBeforeGivePoints: 3
   levelUpAnimDurantion: 2
-  respawnTime: 5
-  prefab: {fileID: 6162717565472237915}
 --- !u!70 &2522377918887586755
 CapsuleCollider2D:
   m_ObjectHideFlags: 0

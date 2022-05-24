@@ -3,33 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(Rigidbody2D))]
-[RequireComponent(typeof(Animator))]
-
-public class Monster : MonoBehaviour
+public class Monster : Entity
 {
-    [Header("Controller")]
-    public Entity entity;
-    public GameManager manager;
-
     [Header("Patrol")]
     public List<Transform> waypointList;
     public float arrivalDistance = 0.5f;
     public float waitTime = 5;
     public int waypointID;
 
-    [Header("Rewards")]
-    public int rewardExperience = 10;
-    public int lootGoldMin = 0;
-    public int lootGoldMAx = 10;
-
-    [Header("Respawn")]
-    public GameObject prefab;
-    public bool respawn = true;
-    public float respawnTime = 10f;
-
     [Header("UI")]
     public Slider healthSlider;
+    public Text nameTag;
 
     // Private
     Transform targetWaypoint;
@@ -37,33 +21,17 @@ public class Monster : MonoBehaviour
     float lastDistanceToTarget = 0f;
     float currentWaitTime = 0f;
     Vector2 direction;
-    Rigidbody2D rb2D;
-    Animator animator;
-    Vector2 initialPosition;
     Coroutine combatCoroutine;
 
-    private void Start()
+    private new void Start()
     {
-        initialPosition = transform.position;
+        base.Start();
+        respawnPosition = transform.position;        
 
-        // Get Components
-        rb2D = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
-        manager = GameObject.Find("GameManager").GetComponent<GameManager>();
-
-        // Entity Setup
-        entity.dead = false;
-        entity.combatCoroutine = false;
-        entity.maxHealth = manager.CalculateHealth(entity);
-        entity.maxMana = manager.CalculateMana(entity);
-        entity.maxStamina = manager.CalculateMana(entity);
-        entity.currentHealth = entity.maxHealth;
-        entity.currentMana = entity.maxMana;
-        entity.currentStamina = entity.maxStamina;
-
-        // Slider Setup
-        healthSlider.maxValue = entity.maxHealth;
+        // UI Setup
+        healthSlider.maxValue = maxHealth;
         healthSlider.value = healthSlider.maxValue;
+        nameTag.text = entityName ?? gameObject.name;
 
         // Waypoints Setup
         foreach(GameObject obj in GameObject.FindGameObjectsWithTag("Waypoint"))
@@ -83,19 +51,13 @@ public class Monster : MonoBehaviour
         }
     }
 
-    private void Update()
+    private new void Update()
     {
-        if (entity.dead) return;
+        base.Update();
 
-        if (entity.currentHealth <= 0)
-        {
-            entity.currentHealth = 0;
-            Die();
-        }
+        healthSlider.value = currentHealth;
 
-        healthSlider.value = entity.currentHealth;
-
-        if (entity.target == null)
+        if (target == null)
         {
             if (waypointList.Count > 0) Patrol();
             else animator.SetBool("isWalking", false);
@@ -108,37 +70,13 @@ public class Monster : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (entity.dead) return;
-        rb2D.MovePosition(rb2D.position + direction * (entity.speed * Time.fixedDeltaTime));
-    }
-
-    private void OnTriggerStay2D(Collider2D collider)
-    {
-        if (!entity.dead && entity.target == null)
-        {
-            if (collider.tag == "Player" && !collider.gameObject.GetComponent<Player>().entity.dead)
-            {
-                entity.target = collider.gameObject;
-            }
-        }
-    }
-
-    private void OnTriggerExit2D(Collider2D collider)
-    {
-        if (entity.target.Equals(collider.gameObject))
-        {
-            entity.target = null;
-        }
-    }
-
-    private void OnCollisionEnter2D(Collision2D collider)
-    {
-        
+        if (dead) return;
+        rb2D.MovePosition(rb2D.position + direction * (speed * Time.fixedDeltaTime));
     }
 
     void Patrol()
     {
-        if (entity.dead) return;
+        if (dead) return;
 
         float distanceToTarget = Vector2.Distance(transform.position, targetWaypoint.position);
 
@@ -174,24 +112,24 @@ public class Monster : MonoBehaviour
 
     void FollowTarget()
     {
-        if (entity.dead) return;
-        if (entity.target.GetComponent<Player>().entity.dead)
+        if (dead) return;
+        if (target.GetComponent<Entity>().dead)
         {
-            entity.target = null;
+            target = null;
             return;
         }
 
-        float distanceToTarget = Vector2.Distance(transform.position, entity.target.transform.position);
+        float distanceToTarget = Vector2.Distance(transform.position, target.transform.position);
 
-        if (distanceToTarget <= entity.attackDistance)
+        if (distanceToTarget <= attackDistance)
         {
             animator.SetBool("isWalking", false);
             direction = Vector2.zero;
-            if (!entity.combatCoroutine) combatCoroutine = StartCoroutine(Attack());
+            if (!combatCoroutineIsRunning) combatCoroutine = StartCoroutine(Attack());
         }
         else
         {
-            direction = (entity.target.transform.position - transform.position).normalized;
+            direction = (target.transform.position - transform.position).normalized;
             animator.SetBool("isWalking", true);
             animator.SetFloat("input_x", direction.x);
             animator.SetFloat("input_y", direction.y);
@@ -200,58 +138,36 @@ public class Monster : MonoBehaviour
 
     IEnumerator Attack()
     {
-        entity.combatCoroutine = true;
+        combatCoroutineIsRunning = true;
         while (true)
         {
-            if(entity.target != null && !entity.target.GetComponent<Player>().entity.dead)
+            if(target != null && !target.GetComponent<Entity>().dead)
             {
-                float distance = Vector2.Distance(transform.position, entity.target.transform.position);
+                float distance = Vector2.Distance(transform.position, target.transform.position);
 
-                if (distance <= entity.attackDistance)
+                if (distance <= attackDistance)
                 {
                     animator.SetBool("attack", true);
-                    int monsterDmg = manager.CalculateDamage(entity, entity.damage);
-                    int targetDef = manager.CalculateDefense(entity.target.GetComponent<Player>().entity, entity.target.GetComponent<Player>().entity.defense);
+                    int monsterDmg = manager.CalculateDamage(this, damage);
+                    int targetDef = manager.CalculateDefense(target.GetComponent<Entity>(), target.GetComponent<Entity>().defense);
                     int dmgResult = monsterDmg - targetDef;
 
                     if (dmgResult < 0)
                         dmgResult = 0;
 
-                    entity.target.GetComponent<Player>().entity.currentHealth -= dmgResult;
+                    target.GetComponent<Entity>().currentHealth -= dmgResult;
                     Debug.Log("Damage given: " + dmgResult);
-                    yield return new WaitForSeconds(entity.cooldown);
+                    yield return new WaitForSeconds(cooldown);
                 }
             }
             else
             {
-                entity.currentHealth = entity.maxHealth;
-                entity.combatCoroutine = false;
+                currentHealth = maxHealth;
+                combatCoroutineIsRunning = false;
                 StopCoroutine(combatCoroutine);
             }
 
             yield return null;
         }
-    }
-
-    void Die()
-    {
-        entity.dead = true;
-        entity.inCombat = false;
-        entity.target = null;
-
-        animator.SetBool("isWalking", false);
-        Player player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
-        player.GainExp(rewardExperience);
-
-        StopAllCoroutines();
-        StartCoroutine(Respawn());
-    }
-
-    IEnumerator Respawn()
-    {
-        yield return new WaitForSeconds(respawnTime);
-        GameObject newMonster = Instantiate(gameObject, initialPosition, transform.rotation, null);
-        newMonster.name = gameObject.name;
-        Destroy(gameObject);
     }
 }

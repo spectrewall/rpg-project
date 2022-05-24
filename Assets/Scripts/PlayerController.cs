@@ -1,80 +1,115 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-[RequireComponent(typeof(Rigidbody2D))]
-[RequireComponent(typeof(Player))]
 
 public class PlayerController : MonoBehaviour
 {
     public Player player;
+    Entity selfEntity;
 
-    public Animator playerAnimator;
-    float input_x = 0;
-    float input_y = 0;
-    bool isWalking = false;
-
-    Rigidbody2D rb2D;
-    Vector2 movement = Vector2.zero;
-
-    [Header("Interact")]
+    [Header("Player Shortcuts")]
     public KeyCode interactKey = KeyCode.E;
+    public KeyCode attributesKey = KeyCode.C;
+    public KeyCode attackKey = KeyCode.Mouse0;
+
+    [Header("Teleport")]
     public bool canTeleport = false;
     public Region tmpRegion;
 
-    // Start is called before the first frame update
+    [Header("UI Panels")]
+    public AttributesUI attributesPanel;
+
+    [Header("Attack Area")]
+    public GameObject attackArea;
+    public MeleeRange meleeRange;
+
+    [Header("Game Manager")]
+    public GameManager manager;
+
+    float input_x = 0f;
+    float input_y = 0f;
+
+    float lastInput_x;
+    float lastInput_y = -1f;
+
+    bool isWalking = false;
+    Vector2 movement = Vector2.zero;
+
     void Start()
     {
         isWalking = false;
-        rb2D = GetComponent<Rigidbody2D>();
         player = GetComponent<Player>();
     }
 
-    // Update is called once per frame
     void Update()
     {
+        // Walk Action
         input_x = Input.GetAxisRaw("Horizontal");
         input_y = Input.GetAxisRaw("Vertical");
+
+        if (input_x != 0 && input_y == 0)
+        {
+            lastInput_x = input_x;
+            lastInput_y = 0;
+        }
+        else if (input_y != 0 && input_x == 0)
+        {
+            lastInput_y = input_y;
+            lastInput_x = 0;
+        }
+        else if (input_x != 0 && input_y != 0)
+        {
+            lastInput_y = input_y;
+            lastInput_x = input_x;
+        }
+
         isWalking = (input_x != 0 || input_y != 0);
         movement = new Vector2(input_x, input_y);
 
         if (isWalking)
         {
-            playerAnimator.SetFloat("input_x", input_x);
-            playerAnimator.SetFloat("input_y", input_y);
+            player.animator.SetFloat("input_x", input_x);
+            player.animator.SetFloat("input_y", input_y);
         }
 
-        playerAnimator.SetBool("isWalking", isWalking);
+        player.animator.SetBool("isWalking", isWalking);
 
-        if (player.entity.attackTimer < 0)
-            player.entity.attackTimer = 0;
+
+        // Attack Action
+        if (player.attackTimer < 0)
+            player.attackTimer = 0;
         else
-            player.entity.attackTimer -= Time.deltaTime;
+            player.attackTimer -= Time.deltaTime;
 
-        if(player.entity.attackTimer == 0 && !isWalking)
+        if (Input.GetButtonDown("Fire1"))
         {
-            if (Input.GetButtonDown("Fire1"))
+            if (player.attackTimer <= 0)
             {
                 Attack();
             }
         }
-        
+
+        // Other Acations
         if (canTeleport && tmpRegion != null && Input.GetKeyDown(interactKey))
         {
-            this.transform.position = tmpRegion.warpLocation.position;
+            transform.position = tmpRegion.warpLocation.position;
+        }
+
+        if (Input.GetKeyDown(attributesKey))
+        {
+            attributesPanel.gameObject.SetActive(!attributesPanel.gameObject.activeSelf);
         }
     }
 
     private void FixedUpdate()
     {
-        rb2D.MovePosition(rb2D.position + (player.entity.speed * Time.fixedDeltaTime * movement));
+        player.rb2D.MovePosition(player.rb2D.position + (player.speed * Time.fixedDeltaTime * movement));
     }
 
     private void OnTriggerStay2D(Collider2D collider)
     {
-        if (collider.tag == "Enemy")
+        if (collider.tag == "Enemy" && collider.gameObject.TryGetComponent(out Entity entity))
         {
-            player.entity.target = collider.transform.gameObject;
+            player.target = entity;
         }
 
         if (collider.tag == "Teleport")
@@ -88,7 +123,7 @@ public class PlayerController : MonoBehaviour
     {
         if (collider.transform.tag == "Enemy")
         {
-            player.entity.target = null;
+            player.target = null;
         }
 
         if (collider.tag == "Teleport")
@@ -100,35 +135,35 @@ public class PlayerController : MonoBehaviour
 
     void Attack()
     {
-        if (player.entity.target == null)
-            return;
+        player.animator.SetTrigger("attack");
+        player.attackTimer = player.cooldown;
 
-        Monster monster = player.entity.target.GetComponent<Monster>();
+        Vector3 attackPlace = (Vector3)((new Vector2(lastInput_x, lastInput_y) * player.attackDistance/2f) + (Vector2)transform.position);
+        Vector2 direction = (attackPlace - transform.position) * 2;
 
-        if (monster.entity.dead)
+        float rotation_z = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        Quaternion rotation = Quaternion.Euler(0f, 0f, rotation_z - 180f);
+
+        meleeRange.transform.localScale = new Vector3(player.attackDistance, player.attackDistance, 1);
+        meleeRange.transform.rotation = Quaternion.Euler(0f, 0f, rotation_z - 45f);
+
+        float modifier = 1;
+        if (lastInput_x > 0) modifier = -1;
+
+        GameObject atkObj = Instantiate(attackArea, attackPlace, rotation, transform);
+        atkObj.transform.localScale = new Vector3(1, modifier, 1);
+
+        List<Entity> everyoneInRange = meleeRange.getEveryoneInRange();
+        everyoneInRange.ForEach(entity =>
         {
-            player.entity.target = null;
-            return;
-        }
+            int totalDmg = manager.CalculateDamage(player, player.damage);
+            int targetDef = manager.CalculateDefense(entity, entity.defense);
+            int dmgResult = totalDmg - targetDef;
 
-        playerAnimator.SetTrigger("attack");
-        player.entity.attackTimer = player.entity.cooldown;
+            if (dmgResult < 0)
+                dmgResult = 0;
 
-        float distance = Vector2.Distance(transform.position, player.entity.target.transform.position);
-
-        if(distance <= player.entity.attackDistance)
-        {
-            int dmg = player.manager.CalculateDamage(player.entity, player.entity.damage);
-            int enemyDef = player.manager.CalculateDefense(monster.entity, monster.entity.defense);
-            int result = dmg - enemyDef;
-
-            if (result < 0)
-                result = 0;
-
-            Debug.Log("Player attack: " + result.ToString());
-
-            monster.entity.currentHealth -= result;
-            monster.entity.target = this.gameObject;
-        }
+            entity.currentHealth -= dmgResult;
+        });
     }
 }

@@ -776,40 +776,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05b72aae7a7c8e54abe135b272597366, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  entity:
-    name: Esqueleto
-    level: 1
-    currentHealth: 100
-    maxHealth: 100
-    baseHealth: 26
-    currentMana: 100
-    maxMana: 100
-    currentStamina: 100
-    maxStamina: 100
-    strength: 4
-    dexterity: 8
-    resistence: 3
-    intelligence: 1
-    willPower: 3
-    agility: 6
-    damage: 2
-    defense: 1
-    speed: 2.5
-    points: 0
-    bonusCritChance: 0
-    bonusSpeed: 0
-    bonusDamage: 0
-    bonusMinDamage: 0
-    bonusMinCritDamage: 0
-    strengthBonus: 1
-    attackDistance: 2
-    attackTimer: 1
-    cooldown: 2
-    inCombat: 0
-    target: {fileID: 0}
-    combatCoroutine: 0
-    dead: 0
-    entityAudio: {fileID: 0}
+  entityName: Skeleton
+  level: 1
+  type: combatent
+  moralAlignment: evil
+  currentHealth: 0
+  maxHealth: 0
+  baseHealth: 26
+  currentMana: 0
+  maxMana: 0
+  currentStamina: 0
+  maxStamina: 0
+  strength: 5
+  dexterity: 5
+  resistence: 5
+  intelligence: 5
+  willPower: 5
+  agility: 5
+  damage: 1
+  defense: 1
+  speed: 2
+  points: 0
+  bonusCritChance: 0
+  bonusSpeed: 0
+  bonusDamage: 0
+  bonusMinDamage: 0
+  bonusMinCritDamage: 0
+  strengthBonus: 1
+  attackDistance: 1
+  attackTimer: 1
+  cooldown: 2
+  inCombat: 0
+  target: {fileID: 0}
+  combatCoroutineIsRunning: 0
+  dead: 0
+  rewardExperience: 10
+  lootGoldMin: 1
+  lootGoldMAx: 10
+  prefab: {fileID: 3275650567127269909}
+  respawn: 1
+  respawnTime: 10
+  respawnPosition: {x: 0, y: 0}
+  entityAudio: {fileID: 0}
+  petPrefab: {fileID: 0}
+  pet: {fileID: 0}
+  rb2D: {fileID: 0}
+  animator: {fileID: 0}
   manager: {fileID: 0}
   waypointList:
   - {fileID: 0}
@@ -817,10 +829,5 @@ MonoBehaviour:
   arrivalDistance: 0.5
   waitTime: 5
   waypointID: 0
-  rewardExperience: 10
-  lootGoldMin: 1
-  lootGoldMAx: 10
-  prefab: {fileID: 3275650567127269909}
-  respawn: 1
-  respawnTime: 10
   healthSlider: {fileID: 1241018467}
+  nameTag: {fileID: 1156706954}
