@@ -15,7 +15,6 @@ public class Monster : Entity
     public Slider healthSlider;
     public Text nameTag;
 
-    // Private
     Transform targetWaypoint;
     int currentWaypoint = 0;
     float lastDistanceToTarget = 0f;
@@ -63,15 +62,13 @@ public class Monster : Entity
             else animator.SetBool("isWalking", false);
         }
         else
-        {
             FollowTarget();
-        }
     }
 
     private void FixedUpdate()
     {
         if (dead) return;
-        rb2D.MovePosition(rb2D.position + direction * (speed * Time.fixedDeltaTime));
+        if (!knockedback) rb2D.MovePosition(rb2D.position + direction * (speed * Time.fixedDeltaTime));
     }
 
     void Patrol()
@@ -156,7 +153,6 @@ public class Monster : Entity
                         dmgResult = 0;
 
                     target.GetComponent<Entity>().currentHealth -= dmgResult;
-                    Debug.Log("Damage given: " + dmgResult);
                     yield return new WaitForSeconds(cooldown);
                 }
             }
