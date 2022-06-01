@@ -75,7 +75,7 @@ public class AttributesUI : MonoBehaviour
 
     private void OnDisable()
     {
-        player.points += spentPoints;
+        totalPoints = 0;
         spentPoints = 0;
     }
 
@@ -187,12 +187,12 @@ public class AttributesUI : MonoBehaviour
     void AddPoints(Text value)
     {
         int attributePoint = Convert.ToInt32(value.text);
-        if (player.points > 0)
+        if (totalPoints > 0)
         {
             value.text = (attributePoint + 1).ToString();
-            player.points--;
+            totalPoints--;
             spentPoints++;
-            pointsText.text = player.points.ToString();
+            pointsText.text = totalPoints.ToString();
             UpdateStats();
         }
     }
@@ -203,9 +203,9 @@ public class AttributesUI : MonoBehaviour
         if (attributePoint > attribute)
         {
             value.text = (attributePoint - 1).ToString();
-            player.points++;
+            totalPoints++;
             spentPoints--;
-            pointsText.text = player.points.ToString();
+            pointsText.text = totalPoints.ToString();
             UpdateStats();
         }
     }
@@ -215,8 +215,10 @@ public class AttributesUI : MonoBehaviour
         if (spentPoints > player.points)
             gameObject.SetActive(false);
 
-        spentPoints = 0;
+        player.points -= spentPoints;
+        totalPoints -= spentPoints;
 
+        spentPoints = 0;
         player.strength = Convert.ToInt32(strText.text);
         player.dexterity = Convert.ToInt32(dexText.text);
         player.resistence = Convert.ToInt32(resText.text);
