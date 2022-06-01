@@ -803,6 +803,7 @@ MonoBehaviour:
   bonusMinDamage: 0
   bonusMinCritDamage: 0
   strengthBonus: 1
+  knockbackForceModifier: 0
   attackDistance: 1
   attackTimer: 1
   cooldown: 2
@@ -810,6 +811,10 @@ MonoBehaviour:
   target: {fileID: 0}
   combatCoroutineIsRunning: 0
   dead: 0
+  knockbackForce: 0
+  knockbackTime: 0.5
+  knockbackCurrentTime: 0
+  knockedback: 0
   rewardExperience: 10
   lootGoldMin: 1
   lootGoldMAx: 10
