@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
 
     public Int32 CalculateDamage(Entity entity, int weaponDamage)
     {
-        System.Random rnd = new System.Random();
+        System.Random rnd = new();
         Int32 baseCritchance = (entity.dexterity / 5) + (entity.willPower / 10) + (entity.level / 5);
         Int32 normalizedCritChance = baseCritchance <= 50 ? baseCritchance : 50;
         Int32 normalizedCritChanceWithBonus = normalizedCritChance + entity.bonusCritChance;
