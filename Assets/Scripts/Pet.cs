@@ -39,13 +39,6 @@ public class Pet : MonoBehaviour
         float heightDifference = ownerHeight - petHeight;
         heightDifferenceBottom = heightDifference / 2;
 
-        // Makes Pet ignore collision with owner and enemys
-        List<GameObject> entities = new List<GameObject>(GameObject.FindGameObjectsWithTag("Enemy"));
-        entities.Add(owner);
-        entities.ForEach(entity => {
-            Physics2D.IgnoreCollision(entity.GetComponent<Collider2D>(), GetComponent<Collider2D>());
-        });
-
         // Defines start position
         ownerBack = getNewOwnerBack(0, -1, owner.transform.position);
         ownerLastPosition = owner.transform.position;
