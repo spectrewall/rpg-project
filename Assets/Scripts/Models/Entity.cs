@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Entity : MonoBehaviour
@@ -42,6 +43,7 @@ public class Entity : MonoBehaviour
     public int bonusMinDamage = 0;
     public int bonusMinCritDamage = 0;
     public float strengthBonus = 1f;
+    public float knockbackForce = 0f;
 
     [Header("Combat")]
     public float attackDistance = 1f;
@@ -51,6 +53,8 @@ public class Entity : MonoBehaviour
     public Entity target;
     public bool combatCoroutineIsRunning = false;
     public bool dead = false;
+    public float knockbackCurrentTime = 0f;
+    public bool knockedback;
 
     [Header("Rewards")]
     public int rewardExperience = 10;
@@ -73,12 +77,57 @@ public class Entity : MonoBehaviour
     [Header("Game Manager")]
     public GameManager manager;
 
-    protected Entity()
+    // TODO implementar um ID unico para cada Entitdade;
+    private string UniqueID;
+
+    public struct TotalDamagebyEntity
     {
+        public Entity entity;
+        public int totalDamage;
+
+        public TotalDamagebyEntity(Entity entity, int totalDamage) : this()
+        {
+            this.entity = entity;
+            this.totalDamage = totalDamage;
+        }
+    }
+
+    private List<TotalDamagebyEntity> totalDamagebyEntities;
+
+    public override bool Equals(object obj)
+    {
+        if (obj == null || GetType() != obj.GetType())
+        {
+            return false;
+        }
+
+        return GetHashCode() == obj.GetHashCode();
+    }
+
+    public override int GetHashCode()
+    {
+        HashCode hash = new HashCode();
+        hash.Add(base.GetHashCode());
+        hash.Add(name);
+        hash.Add(tag);
+        hash.Add(enabled);
+        hash.Add(isActiveAndEnabled);
+        hash.Add(type);
+        hash.Add(moralAlignment);
+        hash.Add(UniqueID);
+        return hash.ToHashCode();
     }
 
     protected void Start()
     {
+        DateTime now = DateTime.Now;
+
+        UniqueID =
+            name +
+            now.ToString("yyyyMMddHHmmssfffffff");
+
+        Debug.Log(UniqueID);
+
         manager = GameObject.Find("GameManager").GetComponent<GameManager>();
         rb2D = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
@@ -96,6 +145,8 @@ public class Entity : MonoBehaviour
         currentHealth = maxHealth;
         currentMana = maxMana;
         currentStamina = maxStamina;
+
+        totalDamagebyEntities = new List<TotalDamagebyEntity>();
 
         // Setup Pet
         if (petPrefab != null)
@@ -118,6 +169,17 @@ public class Entity : MonoBehaviour
             currentHealth = 0;
             Die();
         }
+
+        if (knockbackCurrentTime > 0)
+        {
+            knockbackCurrentTime -= Time.deltaTime;
+            knockedback = true;
+        }
+        else
+        {
+            knockbackCurrentTime = 0;
+            knockedback = false;
+        }
     }
 
     protected void OnTriggerEnter2D(Collider2D collider)
@@ -133,10 +195,49 @@ public class Entity : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collider)
     {
-        if (target != null && target.Equals(collider.gameObject.GetComponent<Entity>()))
+        if (!collider.isTrigger && target != null && target.Equals(collider.gameObject.GetComponent<Entity>()))
         {
             target = null;
         }
+    }
+
+    public void TakeDamage(Entity entity, int damage)
+    {
+        bool found = false;
+        totalDamagebyEntities.ForEach(totalDamagebyEntity =>
+        {
+            if (!found && totalDamagebyEntity.entity == entity)
+            {
+                found = true;
+                Debug.Log("Found totaldamage: " + totalDamagebyEntity.totalDamage.ToString() + ", new damage: " + damage);
+                totalDamagebyEntity.totalDamage += damage;
+            }
+        });
+
+        if (!found)
+        {
+            TotalDamagebyEntity totalDamagebyEntity = new(entity, damage);
+            totalDamagebyEntities.Add(totalDamagebyEntity);
+            Debug.Log("Created new totaldamage: " + totalDamagebyEntity.totalDamage.ToString());
+        }
+
+        currentHealth -= damage;
+    }
+
+    public void TakeDamage(Entity entity, int damage, int seconds)
+    {
+        StartCoroutine(DamageOverTime(entity, damage, seconds));
+    }
+
+    IEnumerator DamageOverTime(Entity entity, int damage, int repetition)
+    {
+        for (int i = 0; i < repetition; i++)
+        {
+            TakeDamage(entity, damage);
+            yield return new WaitForSeconds(1);
+        }
+
+        yield break;
     }
 
     protected void Die()
@@ -147,7 +248,17 @@ public class Entity : MonoBehaviour
         
         animator.SetBool("isWalking", false);
 
-        if (target.TryGetComponent(out Player player)) player.GainExp(rewardExperience);
+        int totalEnemies = totalDamagebyEntities.Count;
+        totalDamagebyEntities.ForEach((totalDamagebyEntitie) =>
+        {
+            float percentOfDamage = totalDamagebyEntitie.totalDamage / maxHealth;
+            float percentOfDamageNormalized = percentOfDamage > 1 ? 1 : percentOfDamage;
+
+            Debug.Log(percentOfDamageNormalized);
+
+            if (totalDamagebyEntitie.entity.gameObject.TryGetComponent(out Player player)) player.GainExp(Mathf.RoundToInt(rewardExperience * percentOfDamageNormalized));
+        });
+
         target = null;
 
         if (gameObject.TryGetComponent(out PlayerController playerController))
@@ -173,5 +284,13 @@ public class Entity : MonoBehaviour
         GameObject newEntity = Instantiate(gameObject, respawnPosition, transform.rotation, null);
         newEntity.name = gameObject.name;
         Destroy(gameObject);
+    }
+
+    public void Knockback(Entity other)
+    {
+        float force = other.knockbackForce;
+        knockbackCurrentTime = force / 100;
+        Vector2 knockbackDirection = transform.position - other.transform.position;
+        rb2D.AddForce(knockbackDirection * force, ForceMode2D.Force);
     }
 }
