@@ -8,6 +8,8 @@ public class MeleeRange : MonoBehaviour
     BoxCollider2D box;
     Entity selfEntity;
     List<Entity> everyoneInRange;
+    Vector3 difference;
+    GameObject animSpawn;
 
     void Start()
     {
@@ -15,11 +17,17 @@ public class MeleeRange : MonoBehaviour
         box = GetComponent<BoxCollider2D>();
         selfEntity = gameObject.GetComponentInParent<Entity>();
         everyoneInRange = new List<Entity>();
+        animSpawn = transform.GetChild(0).gameObject;
+
+        transform.localScale = new Vector3(selfEntity.attackDistance, selfEntity.attackDistance, 1);
     }
 
     void Update()
     {
-        
+        Vector3 diff = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
+        difference = diff.normalized;
+        float rotation_z = Mathf.Atan2(difference.y, difference.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, rotation_z - 45f);
     }
 
     bool notMeCondition(Collider2D other)
@@ -78,12 +86,31 @@ public class MeleeRange : MonoBehaviour
 
     void removeFromListIfNotInRange(Collider2D other)
     {
-        if (!other.isTrigger && notMeCondition(other) && other.TryGetComponent(out Entity entity) && everyoneInRange.Contains(entity) && !inRangeCondition(other))
+        if (!other.isTrigger && notMeCondition(other) && other.TryGetComponent(out Entity entity) && everyoneInRange.Contains(entity) && (!inRangeCondition(other) || entity.dead))
             everyoneInRange.Remove(entity);
     }
 
     public List<Entity> getEveryoneInRange()
     {
         return everyoneInRange;
+    }
+
+    public void performAttack(GameObject atkAnim)
+    {
+        Vector3 diff = difference;
+        float rotation_z = Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg;
+        Quaternion rotation = Quaternion.Euler(0f, 0f, rotation_z - 180f);
+
+        Instantiate(atkAnim, transform.position, rotation);
+    }
+
+    public Vector2 getDirection()
+    {
+        return (Vector2)(animSpawn.transform.position - transform.position).normalized;
+    }
+
+    public void clearList()
+    {
+        everyoneInRange.Clear();
     }
 }
