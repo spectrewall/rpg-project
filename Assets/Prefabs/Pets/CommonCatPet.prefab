@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4613720590236850448}
   - component: {fileID: 4613720590236850452}
   - component: {fileID: 4613720590236850453}
-  m_Layer: 6
+  m_Layer: 7
   m_Name: CommonCatPet
   m_TagString: Pet
   m_Icon: {fileID: 0}
